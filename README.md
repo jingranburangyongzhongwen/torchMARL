@@ -51,11 +51,11 @@ SMAC的各种地图描述在这里：https://github.com/oxwhirl/smac/blob/master
 暂时只贴一部分，因为我目前主要实现值分解的算法，还在实现新的。
 
 ### 1. QMIX 3m --difficulty=7(VeryHard)
-![qmix-3m-7](.\img\qmix-3m-7.png)
+![](./img/qmix-3m-7.png)
 
 ### 2. VDN 3m --difficulty=7(VeryHard)
 
-![vdn-3m-7](.\img\vdn-3m-7.png)
+![](./img/vdn-3m-7.png)
 
 ## Replay
 
