@@ -4,7 +4,7 @@
 [QMIX](https://arxiv.org/abs/1803.11485), [VDN](https://arxiv.org/abs/1706.05296), 
 该项目基于 https://github.com/starry-sky6688/StarCraft 改进得到，简化了模块与算法流程，改进可视化，方便建立自己的算法库。
 
-目前在SMAC上进行测试，可以方便地迁移到任意封装好的环境使用。
+目前在 starcraft2 星际争霸2环境SMAC上进行测试，可以方便地迁移到任意封装好的环境使用。
 
 ## Corresponding Papers
 
