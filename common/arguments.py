@@ -16,7 +16,7 @@ def get_common_args():
     """
     parser = argparse.ArgumentParser()
     # 星际争霸环境设置
-    parser.add_argument('--map', type=str, default='3m', help='使用的地图')
+    parser.add_argument('--map', type=str, default='5m_vs_6m', help='使用的地图')
     parser.add_argument('--difficulty', type=str, default='7', help='游戏难度')
     parser.add_argument('--game_version', type=str, default='latest', help='游戏版本')
     parser.add_argument('--seed', type=int, default=123, help='随机数种子')
@@ -35,6 +35,7 @@ def get_common_args():
     parser.add_argument('--load_model', type=bool, default=False, help='是否加载已有模型')
     parser.add_argument('--learn', type=bool, default=True, help='是否训练模型')
     parser.add_argument('--cuda', type=bool, default=True, help='是否使用GPU')
+    parser.add_argument('--num', type=int, default=3, help='并行执行多少个程序进程')
 
     args = parser.parse_args()
     return args
@@ -59,9 +60,8 @@ def get_q_decom_args(args):
     args.min_epsilon = 0.05
     args.epsilon_decay = (args.epsilon - args.min_epsilon) / 50000
     args.epsilon_anneal_scale = 'step'
-
-    args.n_itr = 20000
-    # args.n_itr = 210
+    # 最大迭代次数
+    args.n_itr = 2000000
     # 一个itr里有多少个episode
     args.n_episodes = 1
     # 一个 itr 里训练多少次

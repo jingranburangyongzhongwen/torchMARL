@@ -17,15 +17,17 @@ import seaborn as sns
 
 
 class Runner:
-    def __init__(self, env, args):
+    def __init__(self, env, args, itr):
         # 获取参数
         # self.args = get_common_args()
         self.args = args
 
         # 获取环境
         self.env = env
+        # 进程编号
+        self.pid = itr
 
-        self.agents = Agents(args)
+        self.agents = Agents(args, itr=itr)
         # 不复用网络，就会有多个agent，训练的时候共享参数，就是一个网络
         # if not self.args.reuse_network:
         #     self.agents = []
@@ -45,8 +47,8 @@ class Runner:
         self.episodes_rewards = []
         self.evaluate_itr = []
 
-        # 保存结果和模型的位置
-        self.save_path = self.args.result_dir + '/' + self.args.alg + '/' + self.args.map
+        # 保存结果和模型的位置，增加计数，帮助一次运行多个实例
+        self.save_path = self.args.result_dir + '/' + self.args.alg + '/' + self.args.map + '/' + str(itr)
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
         print('runner 初始化')
@@ -193,22 +195,25 @@ class Runner:
                 train_steps += 1
             # 周期性评价
             if itr % self.args.evaluation_period == 0:
-                print(f'{itr} / {self.args.n_itr}')
+                print(f'进程 {self.pid}: {itr} / {self.args.n_itr}')
                 win_rate, episodes_reward = self.evaluate()
                 # 保存测试结果
                 self.evaluate_itr.append(itr)
                 self.win_rates.append(win_rate)
                 self.episodes_rewards.append(episodes_reward)
                 # 作图，由于作图比较耗时，因此训练过程中尽量减少作图次数
-                if win_rate > 0.8:
-                    self.plot()
+                # if win_rate > 0.2:
+                # self.plot()
                 if abs(last_win_rate - win_rate) <= 0.05:
                     early_stop -= 1
                 else:
-                    early_stop = 15
+                    early_stop = 10
                 # if early_stop < 1:
                 #     break
                 last_win_rate = win_rate
+                self.save_results()
+            if itr % 5000 == 0:
+                self.plot()
         self.env.close()
 
     def evaluate(self):
@@ -230,6 +235,10 @@ class Runner:
         保存数据，方便后面多种算法结果画在一张图里比较
         :return:
         """
+        # 如果已经有图片就删掉
+        for filename in os.listdir(self.save_path):
+            if filename.endswith('.npy'):
+                os.remove(self.save_path + '/' + filename)
         np.save(self.save_path + '/evaluate_itr.npy', self.evaluate_itr)
         np.save(self.save_path + '/win_rates.npy', self.win_rates)
         np.save(self.save_path + '/episodes_rewards.npy', self.episodes_rewards)

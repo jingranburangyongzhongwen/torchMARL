@@ -7,8 +7,7 @@
 
 """
 import torch.nn as nn
-import torch.nn.functional as F
-from network.base_net import RNN
+import torch
 
 
 class QStar(nn.Module):
@@ -16,16 +15,9 @@ class QStar(nn.Module):
     def __init__(self, args):
         super(QStar, self).__init__()
         self.args = args
-        input_shape = self.args.obs_shape
-        # 调整RNN输入维度
-        if args.last_action:
-            input_shape += self.args.n_actions
-        if args.reuse_network:
-            input_shape += self.args.n_agents
+        self.input_shape = args.state_shape + self.args.n_agents
         # 设置网络
-        self.agent = RNN(input_shape, args)
-
-        self.fc = nn.Sequential(nn.Linear(input_shape, 256),
+        self.fc = nn.Sequential(nn.Linear(self.input_shape, 256),
                                 nn.ReLU(),
                                 nn.Linear(256, 256),
                                 nn.ReLU(),
@@ -37,19 +29,11 @@ class QStar(nn.Module):
 
     def forward(self, qsas, states):
         episode_num = qsas.size(0)
-        qsas = qsas.view(-1, 1, self.args.n_agents)
+        qsas = qsas.view(-1, self.args.n_agents)
         states = states.reshape(-1, self.args.state_shape)
 
-        # w1 = torch.abs(self.hyper_w1(states))
-        # w1 = w1.view(-1, self.args.n_agents, self.args.qmix_hidden_dim)
-        # b1 = self.hyper_b1(states).view(-1, 1, self.args.qmix_hidden_dim)
-        #
-        # hidden = F.elu(torch.bmm(qsas, w1) + b1)
-        #
-        # w2 = torch.abs(self.hyper_w2(states)).view(-1, self.args.qmix_hidden_dim, 1)
-        # b2 = self.hyper_b2(states).view(-1, 1, 1)
-        #
-        # q_total = torch.bmm(hidden, w2) + b2
-        q_star = self.fc(h)
+        input = torch.cat((qsas, states), 1)
+
+        q_star = self.fc(input)
         q_star = q_star.view(episode_num, -1, 1)
         return q_star

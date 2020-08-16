@@ -1,10 +1,11 @@
 # torchMARL
 
 主要是一些MARL算法的pytorch实现，目前包括：
-[QMIX](https://arxiv.org/abs/1803.11485), [VDN](https://arxiv.org/abs/1706.05296), 
+[VDN](https://arxiv.org/abs/1706.05296), [QMIX](https://arxiv.org/abs/1803.11485), [weighted QMIX(CWQMIX, OWQMIX)](https://arxiv.org/abs/2006.10800)
+
 该项目基于 https://github.com/starry-sky6688/StarCraft 改进得到，简化了模块与算法流程，改进可视化，方便建立自己的算法库。
 
-目前在 starcraft2 星际争霸2环境SMAC上进行测试，可以方便地迁移到任意封装好的环境使用。
+目前在SMAC上进行测试，可以方便地迁移到任意封装好的环境使用。
 
 ## Corresponding Papers
 
@@ -16,11 +17,12 @@
 - [From Few to More: Large-scale Dynamic Multiagent Curriculum Learning](https://arxiv.org/abs/1909.02790?context=cs.MA)
 - [Multi-Agent Game Abstraction via Graph Attention Neural Network](https://arxiv.org/abs/1911.10715)
 - [MAVEN: Multi-Agent Variational Exploration](https://arxiv.org/abs/1910.07483)
+- [Rashid, Tabish, et al. “Weighted QMIX: Expanding Monotonic Value Function Factorisation.” ArXiv Preprint ArXiv:2006.10800, 2020.](https://arxiv.org/abs/2006.10800)
 
 ## Requirements
 
 - python
-- torch
+- Pytorch
 - [SMAC](https://github.com/oxwhirl/smac)
 
 ## Acknowledgement
@@ -31,7 +33,7 @@
 
 ## TODO List
 
-- [ ] Weighted QMIX
+- [ ] 调整Weighted QMIX，目前无法复现其5m_vs_6m实验结果
 - [ ] Qatten
 - [ ] Other SOTA MARL algorithms
 - [ ] Update results on other maps
@@ -51,11 +53,11 @@ SMAC的各种地图描述在这里：https://github.com/oxwhirl/smac/blob/master
 暂时只贴一部分，因为我目前主要实现值分解的算法，还在实现新的。
 
 ### 1. QMIX 3m --difficulty=7(VeryHard)
-![](./img/qmix-3m-7.png)
+![qmix-3m-7](./img/qmix-3m-7.png)
 
 ### 2. VDN 3m --difficulty=7(VeryHard)
 
-![](./img/vdn-3m-7.png)
+![vdn-3m-7](./img/vdn-3m-7.png)
 
 ## Replay
 

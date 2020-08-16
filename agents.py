@@ -12,12 +12,12 @@ from policy.q_decom import Q_Decom
 
 
 class Agents:
-    def __init__(self, args, agent_id=None):
+    def __init__(self, args, agent_id=None, itr=1):
         self.args = args
         self.agent_id = agent_id
-        self.q_decom_policy = ['qmix', 'vdn']
+        self.q_decom_policy = ['qmix', 'vdn', 'cwqmix', 'owqmix']
         if args.alg in self.q_decom_policy:
-            self.policy = Q_Decom(args)
+            self.policy = Q_Decom(args, itr)
         else:
             raise Exception("算法不存在")
 
