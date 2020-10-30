@@ -7,6 +7,8 @@
 
 目前在SMAC上进行测试，可以方便地迁移到任意封装好的环境使用。
 
+仍在完善 weighted QMIX的实现，所以只有VDN和QMIX可用。
+
 ## Corresponding Papers
 
 - [QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning](https://arxiv.org/abs/1803.11485)
@@ -19,16 +21,25 @@
 - [MAVEN: Multi-Agent Variational Exploration](https://arxiv.org/abs/1910.07483)
 - [Rashid, Tabish, et al. “Weighted QMIX: Expanding Monotonic Value Function Factorisation.” ArXiv Preprint ArXiv:2006.10800, 2020.](https://arxiv.org/abs/2006.10800)
 
-## Requirements
+## Installation
 
 - python
 - Pytorch
 - [SMAC](https://github.com/oxwhirl/smac)
 
-## Acknowledgement
+对于SMAC，这里简单介绍一下linux下的安装，Windows等系统可以查看上面给出的仓库链接。
 
-+ [SMAC](https://github.com/oxwhirl/smac)
-+ [pymarl](https://github.com/oxwhirl/pymarl)
+1. 通过下列命令安装SMAC
+
+   `pip install git+https://github.com/oxwhirl/smac.git`
+
+2. 安装StarCraft II，这里给出 [4.10](http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.10.zip) 的下载链接，其余版本可以查看[暴雪的仓库](https://github.com/Blizzard/s2client-proto)，解压时需要密码`iagreetotheeula`。解压后文件默认路径为`~/StarCraftII/`，如果放在别的路径，需要更改环境变量`SC2PATH`
+
+3. 下载[SMAC MAPS](https://github.com/oxwhirl/smac/releases/download/v0.1-beta1/SMAC_Maps.zip)，解压后将文件夹直接放在`$SC2PATH/Maps`下即可
+
+4. 运行`python -m smac.bin.map_list `测试安装是否成功
+
+
 
 
 ## TODO List
@@ -38,7 +49,7 @@
 - [ ] Other SOTA MARL algorithms
 - [ ] Update results on other maps
 
-## Quick Start
+## Usage
 
 ```shell
 $ python main.py --map=3m --alg=qmix
