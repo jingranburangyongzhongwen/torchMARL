@@ -7,6 +7,8 @@
 
 """
 import os
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from common.replay_buffer import ReplayBuffer
@@ -181,7 +183,7 @@ class Runner:
             # 添加到 replay buffer
             self.replay_buffer.store(episode_batch)
             # 训练
-            if self.replay_buffer.size < self.args.batch_size:
+            if self.replay_buffer.size < self.args.batch_size * 12.5:
                 # print('replay buffer 还没 batch size 大')
                 continue
             for _ in range(self.args.train_steps):

@@ -11,6 +11,7 @@ from common.arguments import get_common_args, get_q_decom_args
 from common.runner import Runner
 import time
 from multiprocessing import Pool
+import os
 
 
 def main(env, arg, itr):
@@ -25,6 +26,12 @@ def main(env, arg, itr):
 if __name__ == '__main__':
     start = time.time()
     arguments = get_q_decom_args(get_common_args())
+    if arguments.gpu is not None:
+        arguments.cuda = True
+        os.environ["CUDA_VISIBLE_DEVICES"] = arguments.gpu
+    else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ''
+        arguments.cuda = False
     # 设置环境
     environment = StarCraft2Env(map_name=arguments.map,
                                 difficulty=arguments.difficulty,

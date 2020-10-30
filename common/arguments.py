@@ -29,12 +29,13 @@ def get_common_args():
     parser.add_argument('--optim', type=str, default='RMS', help='优化器')
     parser.add_argument('--evaluate_num', type=int, default=20, help='测试的次数')
     parser.add_argument('--reuse_network', type=bool, default=True, help='是否共享一个网络')
+    parser.add_argument('--k', type=int, default=1, help='使用多少个进行ensemble或者average')
     # 程序运行设置
     parser.add_argument('--result_dir', type=str, default='./results', help='保存模型和结果的位置')
     parser.add_argument('--model_dir', type=str, default='./model', help='这个策略模型的地址')
     parser.add_argument('--load_model', type=bool, default=False, help='是否加载已有模型')
     parser.add_argument('--learn', type=bool, default=True, help='是否训练模型')
-    parser.add_argument('--cuda', type=bool, default=True, help='是否使用GPU')
+    parser.add_argument('--gpu', type=str, default=None, help='使用哪个GPU，默认不使用')
     parser.add_argument('--num', type=int, default=1, help='并行执行多少个程序进程')
 
     args = parser.parse_args()
@@ -61,7 +62,7 @@ def get_q_decom_args(args):
     args.epsilon_decay = (args.epsilon - args.min_epsilon) / 50000
     args.epsilon_anneal_scale = 'step'
     # 最大迭代次数
-    args.n_itr = 20000
+    args.n_itr = 2000000
     # 一个itr里有多少个episode
     args.n_episodes = 1
     # 一个 itr 里训练多少次
