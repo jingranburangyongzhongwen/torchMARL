@@ -27,10 +27,10 @@ if __name__ == '__main__':
     arguments = get_q_decom_args(get_common_args())
     # 设置环境
     environment = StarCraft2Env(map_name=arguments.map,
-                        difficulty=arguments.difficulty,
-                        game_version=arguments.game_version,
-                        step_mul=arguments.step_mul,
-                        replay_dir=arguments.replay_dir)
+                                difficulty=arguments.difficulty,
+                                game_version=arguments.game_version,
+                                step_mul=arguments.step_mul,
+                                replay_dir=arguments.replay_dir)
     # 获取环境信息
     env_info = environment.get_env_info()
     # 动作个数
@@ -45,16 +45,16 @@ if __name__ == '__main__':
     arguments.episode_limit = env_info['episode_limit']
 
     # 进程池，数字是并行的进程数，根据资源自行调整，默认是CPU核的个数
-    p = Pool(12)
-    for i in range(arguments.num):
-        p.apply_async(main, args=(environment, arguments, i))
-    print('子进程开始...')
-    p.close()
-    p.join()
-    print('所有子进程结束！')
-    # runners = list()
-    # for itr in range(1):
-    #     runners.append(
+    if arguments.num > 1:
+        p = Pool(12)
+        for i in range(arguments.num):
+            p.apply_async(main, args=(environment, arguments, i))
+        print('子进程开始...')
+        p.close()
+        p.join()
+        print('所有子进程结束！')
+    else:
+        main(environment, arguments, 0)
 
     duration = time.time() - start
     time_list = [0, 0, 0]

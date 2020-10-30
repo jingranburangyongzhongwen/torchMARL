@@ -37,7 +37,7 @@
 
 3. 下载[SMAC MAPS](https://github.com/oxwhirl/smac/releases/download/v0.1-beta1/SMAC_Maps.zip)，解压后将文件夹直接放在`$SC2PATH/Maps`下即可
 
-4. 运行`python -m smac.bin.map_list `测试安装是否成功
+4. 运行`python -m smac.bin.map_list `测试地图是否放置成功，运行`python -m smac.examples.random_agents`测试安装是否成功。如果是centos的话可能会出现因为缺少对应版本依赖`/home/user/SMAC/StarCraftII/Versions/Base75689/SC2_x64: /lib64/libc.so.6: version 'GLIBC_2.18' not found (required by /home/user/SMAC/StarCraftII/Libs/libstdc++.so.6)`而导致`pysc2.lib.remote_controller.ConnectError: Failed to connect to the SC2 websocket. Is it up?`，这时候就要根据情况安装依赖或者使用docker了。
 
 
 
