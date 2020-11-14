@@ -74,17 +74,10 @@ SMAC的各种地图描述在这里：https://github.com/oxwhirl/smac/blob/master
 
 ### 5m_vs_6m
 
-<center> <figure> 
-    <img src="" width='30%'/>
-    <img src="" width='30%'/> 
-    <img src="" width='30%'/> 
-</figure> </center>
 
 | ![](./img/qmix-5m_vs_6m.png) | ![](./img/cwqmix-5m_vs_6m.png) | ![](./img/owqmix-5m_vs_6m.png) |
 | :--------------------------: | :----------------------------: | :----------------------------: |
 |             QMIX             |            CW-QMIX             |            OW-QMIX             |
-
-
 
 ## Replay
 
