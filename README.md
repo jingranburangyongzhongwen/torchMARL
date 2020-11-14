@@ -1,7 +1,7 @@
 # torchMARL
 
 主要是一些MARL算法的pytorch实现，目前包括：
-[VDN](https://arxiv.org/abs/1706.05296), [QMIX](https://arxiv.org/abs/1803.11485), [Weighted QMIX(CWQMIX, OWQMIX)](https://arxiv.org/abs/2006.10800)
+[VDN](https://arxiv.org/abs/1706.05296), [QMIX](https://arxiv.org/abs/1803.11485), [Weighted QMIX(CW-QMIX, OW-QMIX)](https://arxiv.org/abs/2006.10800)
 
 该项目基于 https://github.com/starry-sky6688/StarCraft 改进得到，简化了模块与算法流程，改进可视化，方便建立自己的算法库。
 
