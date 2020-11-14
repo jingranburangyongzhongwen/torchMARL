@@ -41,7 +41,12 @@ class Q_Decom:
                 self.qstar_target_mix = QStar(args)
                 self.qstar_eval_rnn = RNN(input_shape, args)
                 self.qstar_target_rnn = RNN(input_shape, args)
-                self.alpha = 0.75
+                if self.args.alg == 'cwqmix':
+                    self.alpha = 0.75
+                elif self.args.alg == 'owqmix':
+                    self.alpha = 0.5
+                else:
+                    raise Exception('没有这个算法')
         elif self.args.alg == 'vdn':
             self.eval_mix_net = VDNMixer()
             self.target_mix_net = VDNMixer()
@@ -151,6 +156,8 @@ class Q_Decom:
         # 计算Q_tot
         eval_q_total = self.eval_mix_net(eval_qs, s)
         qstar_q_total = None
+        # 需要先把不行动作的mask掉
+        target_qs[next_avail_a == 0.0] = -9999999
         if self.wqmix > 0:
             # TODO 找到使得Q_tot最大的联合动作，由于qmix是单调假设的，每个agent q值最大则 Q_tot最大，因此联合动作就是每个agent q值最大的动作
             argmax_u = target_qs.argmax(dim=3).unsqueeze(3)
@@ -164,7 +171,6 @@ class Q_Decom:
         else:
             # 得到 target q，是inf出现的nan
             # target_qs[next_avail_a == 0.0] = float('-inf')
-            target_qs[next_avail_a == 0.0] = -9999999
             target_qs = target_qs.max(dim=3)[0]
             # 计算target Q_tot
             next_q_total = self.target_mix_net(target_qs, next_s)
@@ -282,9 +288,14 @@ class Q_Decom:
         return inputs, next_inputs
 
     def save_model(self, train_step):
-        num = str(train_step // self.args.save_model_period)
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
+
+        if type(train_step) == str:
+            num = train_step
+        else:
+            num = str(train_step // self.args.save_model_period)
+
         torch.save(self.eval_mix_net.state_dict(), self.model_dir + '/' + num + '_'
                    + self.args.alg + '_net_params.pkl')
         torch.save(self.eval_rnn.state_dict(), self.model_dir + '/' + num + '_rnn_params.pkl')

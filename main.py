@@ -25,17 +25,22 @@ def main(env, arg, itr):
 
 if __name__ == '__main__':
     start = time.time()
+    start_time = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+    print('开始时间：' + start_time)
+
     arguments = get_q_decom_args(get_common_args())
     if arguments.gpu is not None:
         arguments.cuda = True
-        os.environ["CUDA_VISIBLE_DEVICES"] = arguments.gpu
+        if arguments.gpu == 'a':
+            pass
+        else:
+            os.environ["CUDA_VISIBLE_DEVICES"] = arguments.gpu
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = ''
         arguments.cuda = False
-    # 设置环境
+    # 设置环境，pymarl中设置的也是环境默认参数
     environment = StarCraft2Env(map_name=arguments.map,
                                 difficulty=arguments.difficulty,
-                                game_version=arguments.game_version,
                                 step_mul=arguments.step_mul,
                                 replay_dir=arguments.replay_dir)
     # 获取环境信息
@@ -61,7 +66,8 @@ if __name__ == '__main__':
         p.join()
         print('所有子进程结束！')
     else:
-        main(environment, arguments, 0)
+        # 0是4.10,1是4.6.2；对于ensemble，1是正常每次都随机权重，0是直接平均。
+        main(environment, arguments, 1)
 
     duration = time.time() - start
     time_list = [0, 0, 0]
@@ -69,5 +75,6 @@ if __name__ == '__main__':
     time_list[1] = (duration % 3600) // 60
     time_list[2] = round(duration % 60, 2)
     print('用时：' + str(time_list[0]) + ' 时 ' + str(time_list[1]) + '分' + str(time_list[2]) + '秒')
+    print('开始时间：' + start_time)
     end_time = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
     print('结束时间：' + end_time)

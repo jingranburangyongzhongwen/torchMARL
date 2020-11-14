@@ -7,15 +7,15 @@
 
 """
 import os
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
 import numpy as np
 from common.replay_buffer import ReplayBuffer
 from agents import Agents
 import time
 import pandas as pd
 import seaborn as sns
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 
 
 class Runner:
@@ -48,6 +48,8 @@ class Runner:
         '''
         self.episodes_rewards = []
         self.evaluate_itr = []
+
+        self.max_win_rate = 0
 
         # 保存结果和模型的位置，增加计数，帮助一次运行多个实例
         self.save_path = self.args.result_dir + '/' + self.args.alg + '/' + self.args.map + '/' + str(itr)
@@ -166,10 +168,10 @@ class Runner:
     def run(self):
         train_steps = 0
         early_stop = 10
-        last_win_rate = 0
+        num_eval = 0
+        self.max_win_rate = 0
 
         for itr in range(self.args.n_itr):
-            # print(f'{itr} / {self.args.n_itr}')
             # 收集 n_episodes 的数据
             episode_batch, _, _ = self.generate_episode(0)
             for key in episode_batch.keys():
@@ -197,25 +199,24 @@ class Runner:
                 train_steps += 1
             # 周期性评价
             if itr % self.args.evaluation_period == 0:
+                num_eval += 1
                 print(f'进程 {self.pid}: {itr} / {self.args.n_itr}')
                 win_rate, episodes_reward = self.evaluate()
                 # 保存测试结果
                 self.evaluate_itr.append(itr)
                 self.win_rates.append(win_rate)
                 self.episodes_rewards.append(episodes_reward)
-                # 作图，由于作图比较耗时，因此训练过程中尽量减少作图次数
-                # if win_rate > 0.2:
-                # self.plot()
-                if abs(last_win_rate - win_rate) <= 0.05:
-                    early_stop -= 1
-                else:
-                    early_stop = 10
-                # if early_stop < 1:
-                #     break
-                last_win_rate = win_rate
-                self.save_results()
-            if itr % 5000 == 0:
-                self.plot()
+                # 表现好的模型要额外保存
+                if win_rate > self.max_win_rate:
+                    self.max_win_rate = win_rate
+                    self.agents.policy.save_model(str(win_rate))
+                # 不时刻保存，从而减少时间花费
+                if num_eval % 50 == 0:
+                    self.save_results()
+                    self.plot()
+        # 最后把所有的都保存一下
+        self.save_results()
+        self.plot()
         self.env.close()
 
     def evaluate(self):
@@ -250,6 +251,30 @@ class Runner:
         定期绘图
         :return:
         """
+        fig = plt.figure()
+        ax1 = fig.add_subplot(211)
+        win_x = np.array(self.evaluate_itr)[:, None]
+        win_y = np.array(self.win_rates)[:, None]
+        plot_win = pd.DataFrame(np.concatenate((win_x, win_y), axis=1), columns=['evaluate_itr', 'win_rates'])
+        sns.lineplot(x="evaluate_itr", y="win_rates", data=plot_win, ax=ax1)
+
+        ax2 = fig.add_subplot(212)
+        reward_x = np.repeat(self.evaluate_itr, self.args.evaluate_num)[:, None]
+        reward_y = np.array(self.episodes_rewards).flatten()[:, None]
+        plot_reward = pd.DataFrame(np.concatenate((reward_x, reward_y), axis=1),
+                                   columns=['evaluate_itr', 'episodes_rewards'])
+        sns.lineplot(x="evaluate_itr", y="episodes_rewards", data=plot_reward, ax=ax2,
+                     ci=68, estimator=np.median)
+
+        # 格式化成2016-03-20-11_45_39形式
+        tag = self.args.alg + '-' + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+        # 如果已经有图片就删掉
+        for filename in os.listdir(self.save_path):
+            if filename.endswith('.png'):
+                os.remove(self.save_path + '/' + filename)
+        fig.savefig(self.save_path + "/%s.png" % tag)
+        plt.close()
+
         # plt.figure()
         # plt.cla()
         # # 平均胜率图
@@ -280,26 +305,3 @@ class Runner:
         #                  color='blue', alpha=0.2)
         # plt.xlabel('itr')
         # plt.ylabel('episode_reward')
-
-        fig = plt.figure()
-        ax1 = fig.add_subplot(211)
-        win_x = np.array(self.evaluate_itr)[:, None]
-        win_y = np.array(self.win_rates)[:, None]
-        plot_win = pd.DataFrame(np.concatenate((win_x, win_y), axis=1), columns=['evaluate_itr', 'win_rates'])
-        sns.lineplot(x="evaluate_itr", y="win_rates", data=plot_win, ax=ax1)
-
-        ax2 = fig.add_subplot(212)
-        reward_x = np.repeat(self.evaluate_itr, self.args.evaluate_num)[:, None]
-        reward_y = np.array(self.episodes_rewards).flatten()[:, None]
-        plot_reward = pd.DataFrame(np.concatenate((reward_x, reward_y), axis=1),
-                                   columns=['evaluate_itr', 'episodes_rewards'])
-        sns.lineplot(x="evaluate_itr", y="episodes_rewards", data=plot_reward, ax=ax2)
-
-        # 格式化成2016-03-20-11_45_39形式
-        tag = self.args.alg + '-' + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
-        # 如果已经有图片就删掉
-        for filename in os.listdir(self.save_path):
-            if filename.endswith('.png'):
-                os.remove(self.save_path + '/' + filename)
-        fig.savefig(self.save_path + "/%s.png" % tag)
-        plt.close()

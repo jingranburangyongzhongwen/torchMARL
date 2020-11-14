@@ -15,8 +15,8 @@ class Agents:
     def __init__(self, args, agent_id=None, itr=1):
         self.args = args
         self.agent_id = agent_id
-        self.q_decom_policy = ['qmix', 'vdn', 'cwqmix', 'owqmix']
-        if args.alg in self.q_decom_policy:
+        q_decom_policy = ['qmix', 'vdn', 'cwqmix', 'owqmix']
+        if args.alg in q_decom_policy:
             self.policy = Q_Decom(args, itr)
         else:
             raise Exception("算法不存在")
