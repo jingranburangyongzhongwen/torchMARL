@@ -26,10 +26,10 @@
 
 ## Installation
 
-- Python $\geq$ 3.6
-- Pytorch $\geq$ 1.2
+- Python >= 3.6
+- Pytorch >= 1.2
 - SMAC
-- Seaborn $\geq$ 0.9
+- Seaborn >= 0.9
 
 对于SMAC，这里简单介绍一下linux下的安装，Windows等系统可以查看[他们的仓库](https://github.com/oxwhirl/smac)。
 
