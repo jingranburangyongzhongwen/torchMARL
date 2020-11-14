@@ -68,22 +68,23 @@ SMAC的各种地图描述在这里：https://github.com/oxwhirl/smac/blob/master
 
 ### 3m
 
-<center> <figure> 
-    <img src="./img/vdn-3m-7.png" width='30%'/>
-    <img src="./img/qmix-3m-7.png" width='30%'/> 
-</figure> </center>
-
-<center>VDN, QMIX</center>
+| <img src="./img/vdn-3m-7.png" style="zoom:80%;" /> | <img src="./img/qmix-3m-7.png" style="zoom:80%;" /> |
+| :------------------------------------------------: | :-------------------------------------------------: |
+|                        VDN                         |                        QMIX                         |
 
 ### 5m_vs_6m
 
 <center> <figure> 
-    <img src="./img/qmix-5m_vs_6m.png" width='30%'/>
-    <img src="./img/cwqmix-5m_vs_6m.png" width='30%'/> 
-    <img src="./img/owqmix-5m_vs_6m.png" width='30%'/> 
+    <img src="" width='30%'/>
+    <img src="" width='30%'/> 
+    <img src="" width='30%'/> 
 </figure> </center>
 
-<center>QMIX, CW-QMIX, OW-QMIX</center>
+| ![](./img/qmix-5m_vs_6m.png) | ![](./img/cwqmix-5m_vs_6m.png) | ![](./img/owqmix-5m_vs_6m.png) |
+| :--------------------------: | :----------------------------: | :----------------------------: |
+|             QMIX             |            CW-QMIX             |            OW-QMIX             |
+
+
 
 ## Replay
 
