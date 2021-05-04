@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-@Time ： 2020/7/16 16:43
 @Auth ： Kunfeng Li
-@File ：replay_buffer.py
 @IDE ：PyCharm
-
 """
 import numpy as np
 import threading

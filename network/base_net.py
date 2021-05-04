@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-@Time ： 2020/7/17 20:48
 @Auth ： Kunfeng Li
-@File ：base_net.py
 @IDE ：PyCharm
-
 """
 import torch.nn as nn
 import torch.nn.functional as F

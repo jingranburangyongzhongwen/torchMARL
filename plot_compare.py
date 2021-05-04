@@ -1,250 +1,209 @@
 # -*- coding: utf-8 -*-
 """
-@Time ： 2020/07/25 16:52
 @Auth ： Kunfeng Li
-@File ：plot_compare.py
 @IDE ：PyCharm
-
 """
-from common.arguments import get_common_args
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 import seaborn as sns
 import pandas as pd
 import math
+from copy import deepcopy
 
 
-def load_results(alg, map, i):
+def load_results(pre, alg=None, i=None):
     """
     从指定位置加载数据，方便后续作图
-    :param path:
-    :return:
     """
-    path = '../Experiments/results/' + alg + '/' + map + '/' + str(i)
-    return np.load(path + '/evaluate_itr.npy') / 1000., np.load(path + '/win_rates.npy'), np.load(path + '/episodes_rewards.npy')
+    path = pre + '/' + alg + '/' + str(i)
+    return np.load(path + '/evaluate_itr.npy'), np.load(path + '/win_rates.npy'), \
+           np.load(path + '/episodes_rewards.npy')
 
 
-def plot_one_run_compare(which, maps='3m', how_many=None, k=None, both=False, show=True):
-    args = get_common_args()
-    if k is None:
-        algs = [which + '-k5', which + '-k10', which + '-k15']
-    else:
-        algs = ['Ensemble-k' + str(k), 'Averaged-k' + str(k)]
-    # colors = ['blue', 'k', 'r', 'tan', 'yellowgreen', 'darksage', 'g', 'c', 'purple']
-
-    evaluate_itr, win_rates, episodes_rewards = load_results('QMIX', maps, 1)
-    alg = np.full(evaluate_itr.shape, fill_value='QMIX')
-    win_compare = pd.DataFrame(np.concatenate((evaluate_itr[:, None], alg[:, None], win_rates[:, None]), axis=1),
-                               columns=['Iterations (k)', 'Methods', 'Median win rates per episode'])
-
-    evaluate_itr = np.repeat(evaluate_itr, args.evaluate_num)[:, None]
-    episodes_rewards = episodes_rewards.flatten()[:, None]
-    alg = np.full(evaluate_itr.shape, fill_value='QMIX')
-    rewards_compare = pd.DataFrame(np.concatenate((evaluate_itr, alg, episodes_rewards), axis=1),
-                                   columns=['Iterations (k)', 'Methods', 'Median reward per episode'])
-
-    for i in range(len(algs)):
-        evaluate_itr, win_rates, episodes_rewards = load_results(algs[i], maps, 1)
-        if how_many is not None:
-            internal = math.ceil(evaluate_itr.shape[0] / how_many)
-            indxes = np.arange(0, evaluate_itr.shape[0], internal, dtype=np.int)
-            evaluate_itr = np.array(evaluate_itr)[indxes:]
-            win_rates = win_rates[indxes:]
-            episodes_rewards = episodes_rewards[indxes:]
-        alg = np.full(evaluate_itr.shape, fill_value=algs[i])
-        tmp_win = pd.DataFrame(np.concatenate((evaluate_itr[:, None], alg[:, None], win_rates[:, None]), axis=1),
-                               columns=['Iterations (k)', 'Methods', 'Median win rates per episode'])
-
-        evaluate_itr = np.repeat(evaluate_itr, args.evaluate_num)[:, None]
-        episodes_rewards = episodes_rewards.flatten()[:, None]
-        alg = np.full(evaluate_itr.shape, fill_value=algs[i])
-        tmp_reward = pd.DataFrame(np.concatenate((evaluate_itr, alg, episodes_rewards), axis=1),
-                                  columns=['Iterations (k)', 'Methods', 'Median reward per episode'])
-        win_compare = pd.concat([win_compare, tmp_win], axis=0)
-        rewards_compare = pd.concat([rewards_compare, tmp_reward], axis=0)
-
-    win_compare[['Iterations (k)', 'Median win rates per episode']] = win_compare[['Iterations (k)', 'Median win rates per episode']]\
-        .apply(pd.to_numeric)
-    rewards_compare[['Iterations (k)', 'Median reward per episode']] = rewards_compare[['Iterations (k)', 'Median reward per episode']]\
-        .apply(pd.to_numeric)
-
-    sns.set(context='paper', style='darkgrid')
-    fig = plt.figure()
-    plt.title(maps)
-    if both:
-        ax1 = fig.add_subplot(211)
-        sns.lineplot(x="Iterations (k)", y="Median win rates per episode", hue='Methods', data=win_compare, ax=ax1,
-                     ci='sd', estimator=np.median)
-
-        ax2 = fig.add_subplot(212)
-        sns.lineplot(x="Iterations (k)", y="Median reward per episode", hue='Methods', data=rewards_compare, ax=ax2,
-                     ci=68, estimator=np.median)
-    else:
-        sns.lineplot(x="Iterations (k)", y="Median reward per episode", hue='Methods', data=rewards_compare,
-                     ci=68, estimator=np.median)
-    # 格式化成2016-03-20_11-45-39形式
-    tag = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
-    if show:
-        plt.show()
-    else:
-        # palette=colors[:len(algs)+1] dpi=300
-        if k is None:
-            plt.savefig('../Experiments/reward_compare/' + which + '_' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
-        else:
-            plt.savefig('../Experiments/reward_compare/' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
-
-
-def plot_multi_run_compare(which='ensemble', maps='3m', num=3, how_many=None, k=None, show=True):
-    if k is None:
-        algs = ['QMIX', which + '-k5', which + '-k10', which + '-k15']
-    else:
-        algs = ['QMIX', 'Ensemble-k' + str(k[0]), 'Averaged-k' + str(k[1])]
+def plot_multi_run_compare(pre, algs, num=5, mode=0, s=0, window=10, split=None, unit='mil', how_many=None,
+                           show=True, pic_name=None):
+    """
+    绘制多个方法的多次运行数据
+    """
     # colors = ['blue', 'k', 'r', 'tan', 'yellowgreen', 'darksage', 'g', 'c', 'purple']
     win_compare = None
-    for n in range(num):
-        for i in range(len(algs)):
-            evaluate_itr, win_rates, episodes_rewards = load_results(algs[i], maps, n)
+    win_mean = None
+    reward_compare = None
+    reward_var = None
+    reward_roll = None
+
+    standard_itr = None
+    for alg in algs:
+        for i in range(num):
+            evaluate_itr, win_rates, episodes_rewards = load_results(pre, alg, i)
+            if unit is 'mil':
+                evaluate_itr = evaluate_itr / 1000000.
+            else:
+                evaluate_itr = evaluate_itr / 1000.
+            # 数据对齐
+            if unit is 'mil':
+                while win_rates.shape[0] < 299:
+                    win_rates = np.append(win_rates, win_rates[-1])
+                while evaluate_itr.shape[0] < 299:
+                    if evaluate_itr[-1] <= 1.:
+                        evaluate_itr = np.append(evaluate_itr, 1.)
+                    else:
+                        evaluate_itr = np.append(evaluate_itr, 2.)
+                while episodes_rewards.shape[0] < 299:
+                    episodes_rewards = np.concatenate([episodes_rewards, episodes_rewards[-1][None, :]], axis=0)
+
             if how_many is not None:
-                internal = math.ceil(evaluate_itr.shape[0] / how_many)
-                indxes = np.arange(0, evaluate_itr.shape[0], internal, dtype=np.int)
-                evaluate_itr = evaluate_itr[indxes]
-                win_rates = win_rates[indxes]
-            alg = np.full(evaluate_itr.shape, fill_value=algs[i])
-            tmp_win = pd.DataFrame(np.concatenate((evaluate_itr[:, None], alg[:, None], win_rates[:, None]), axis=1),
-                                   columns=['Iterations (k)', 'Methods', 'Median win rates per episode'])
+                interval = math.ceil(evaluate_itr.shape[0] / how_many)
+                indexes = np.arange(0, evaluate_itr.shape[0], interval, dtype=np.int)
+
+                evaluate_itr = evaluate_itr[indexes]
+                win_rates = win_rates[indexes]
+                episodes_rewards = episodes_rewards[indexes]
+            if standard_itr is None:
+                standard_itr = evaluate_itr
+
+            alg_tag = np.full(standard_itr.shape, fill_value=alg)
+            tmp_win = pd.DataFrame(np.concatenate((standard_itr[:, None], alg_tag[:, None], win_rates[:, None]),
+                                                  axis=1),
+                                   columns=['Steps ('+unit+')', 'Methods', 'Median Test Win'])
+            tmp_win_mean = deepcopy(tmp_win)
+            tmp_win_mean['Median Test Win'] = tmp_win['Median Test Win']. \
+                rolling(window=window, min_periods=None).mean()
             if win_compare is None:
                 win_compare = tmp_win
+                win_mean = tmp_win_mean
             else:
                 win_compare = pd.concat([win_compare, tmp_win], axis=0)
+                win_mean = pd.concat([win_mean, tmp_win_mean], axis=0)
 
-    win_compare[['Iterations (k)', 'Median win rates per episode']] = \
-        win_compare[['Iterations (k)', 'Median win rates per episode']].apply(pd.to_numeric)
+            tmp_reward = pd.DataFrame(np.concatenate((standard_itr[:, None], alg_tag[:, None],
+                                                      np.median(episodes_rewards, axis=1)[:, None]), axis=1),
+                                      columns=['Steps ('+unit+')', 'Methods', 'Median Joint-action Value'])
 
-    sns.set(context='paper', style='darkgrid')
-    fig = plt.figure()
-    plt.title(maps)
+            tmp_reward_roll = deepcopy(tmp_reward)
+            tmp_reward_var = deepcopy(tmp_reward)
+            if s == 0:
+                tmp_reward_var['Median Joint-action Value'] = tmp_reward['Median Joint-action Value'].\
+                    rolling(window=window, min_periods=None).kurt()
+                tmp_reward_roll['Median Joint-action Value'] = tmp_reward['Median Joint-action Value']. \
+                    rolling(window=window, min_periods=None).mean()
+            else:
+                tmp_reward_var['Median Joint-action Value'] = tmp_reward['Median Joint-action Value']. \
+                    rolling(window=window, min_periods=None).skew()
+                tmp_reward_roll['Median Joint-action Value'] = tmp_reward['Median Joint-action Value']. \
+                    rolling(window=window, min_periods=None).std()
 
-    sns.lineplot(x="Iterations (k)", y="Median win rates per episode", hue='Methods', data=win_compare,
-                 ci='sd', estimator=np.median)
-    # 格式化成2016-03-20_11-45-39形式
-    tag = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+            tmp_reward_var = tmp_reward_var[window:]
+            tmp_reward_roll = tmp_reward_roll[window:]
+            if reward_compare is None:
+                reward_compare = tmp_reward
+                reward_var = tmp_reward_var
+                reward_roll = tmp_reward_roll
+            else:
+                reward_compare = pd.concat([reward_compare, tmp_reward], axis=0)
+                reward_var = pd.concat([reward_var, tmp_reward_var], axis=0)
+                reward_roll = pd.concat([reward_roll, tmp_reward_roll], axis=0)
+
+    win_compare[['Steps ('+unit+')', 'Median Test Win']] = \
+        win_compare[['Steps ('+unit+')', 'Median Test Win']].apply(pd.to_numeric)
+    win_mean[['Steps (' + unit + ')', 'Median Test Win']] = \
+        win_mean[['Steps (' + unit + ')', 'Median Test Win']].apply(pd.to_numeric)
+    reward_compare[['Steps ('+unit+')', 'Median Joint-action Value']] = \
+        reward_compare[['Steps ('+unit+')', 'Median Joint-action Value']].apply(pd.to_numeric)
+    reward_var[['Steps ('+unit+')', 'Median Joint-action Value']] = \
+        reward_var[['Steps ('+unit+')', 'Median Joint-action Value']].apply(pd.to_numeric)
+    reward_roll[['Steps ('+unit+')', 'Median Joint-action Value']] = \
+        reward_roll[['Steps ('+unit+')', 'Median Joint-action Value']].apply(pd.to_numeric)
+
+    sns.set(context='paper', style='white')
+    fig, ax = plt.subplots()
+
+    # 之前做mmdp实验是联合动作值，其余实验就是return
+    if mode == 0:
+        if unit is 'k':
+            y_name = 'Median Joint-action Value'
+        else:
+            y_name = 'Median Test Return'
+        data = reward_compare.rename(columns=
+                                     {'Median Joint-action Value': y_name})
+    elif mode == 1:
+        y_name = 'Median Skewness'
+        if s == 0:
+            y_name = 'Median Kurtosis'
+            # plt.hlines(y=-3, xmin=min(standard_itr), xmax=max(standard_itr), colors="b", linestyles="dashed")
+
+        data = reward_var.rename(columns={'Median Joint-action Value': y_name})
+    elif mode == 2:
+        y_name = 'Collective Returns' # Rolling Window Mean
+        if s == 1:
+            y_name = 'Median Joint-action Value std'
+        data = reward_roll.rename(columns=
+                                  {'Median Joint-action Value': y_name})
+    elif mode == 3:
+        plt.ylim(0, 1.0)
+        data = win_compare
+        y_name = 'Median Test Win'
+    elif mode == 4:
+        plt.ylim(0, 1.0)
+        data = win_mean
+        y_name = 'Median Test Win'
+    else:
+        raise Exception('没有这个mode！')
+
+    # plt.title(map)
+    if split is None:
+        sns.lineplot(x='Steps (' + unit + ')', y=y_name, hue='Methods',
+                     data=data,
+                     ci=68, estimator=np.median)
+    else:
+        data_dict = dict(list(data.groupby('Methods')))
+        sns.lineplot(x='Steps (' + unit + ')', y=y_name, hue='Methods',
+                     data=data_dict[algs[0]], ax=ax,
+                     ci=68, estimator=np.median)
+        index = 0
+        colors = [1, 2, 3, 4, 5, 6]
+        # sns.color_palette("Paired")[index]
+        for i in range(1, len(algs)):
+            sns.lineplot(x='Steps (' + unit + ')', y=y_name, color=sns.color_palette("colorblind")[colors[index]],
+                         data=data_dict[algs[i]], label=algs[i], ax=ax,
+                         ci=68, estimator=np.median)
+            if type(split) is list:
+                if split[0] in algs[i]:
+                    ax.lines[i + 2].set_linestyle("--")
+                if split[-1] in algs[i]:
+                    index += 1
+                    ax.lines[i + 2].set_linestyle((0, (1, 1)))
+            else:
+                if split in algs[i]:
+                    index += 1
+                    ax.lines[i + 2].set_linestyle("--")
+    plt.legend()
+    # 格式化成2020-03-20_11-45-39形式
+    tag = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
     if show:
         plt.show()
     else:
-        # palette=colors[:len(algs)+1] dpi=300
-        if k is None:
-            plt.savefig('../Experiments/reward_compare/' + which + '_' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
+        if pic_name:
+            plt.savefig(pic_name+'.pdf', dpi=600, format='pdf', bbox_inches='tight')
         else:
-            plt.savefig('../Experiments/reward_compare/' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
-
-
-def plot_reward_compare(which='averaged', maps='3m', n_run=None, how_many=None, k=None, show=True):
-    if k is None:
-        algs = ['QMIX', which + '-k5', which + '-k10', which + '-k15']
-    else:
-        algs = ['QMIX', 'Ensemble-k' + str(k[0]), 'Averaged-k' + str(k[1])]
-    # colors = ['blue', 'k', 'r', 'tan', 'yellowgreen', 'darksage', 'g', 'c', 'purple']
-
-    rewards_compare = None
-    for i in range(len(algs)):
-        j = 1
-        if not n_run is None:
-            j = n_run[i]
-        evaluate_itr, win_rates, episodes_rewards = load_results(algs[i], maps, j)
-        if how_many is not None:
-            internal = math.ceil(evaluate_itr.shape[0] / how_many)
-            indxes = np.arange(0, evaluate_itr.shape[0], internal, dtype=np.int)
-            evaluate_itr = evaluate_itr[indxes]
-            episodes_rewards = episodes_rewards[indxes]
-        evaluate_itr = np.repeat(evaluate_itr, episodes_rewards.shape[1])[:, None]
-        episodes_rewards = episodes_rewards.flatten()[:, None]
-        alg = np.full(evaluate_itr.shape, fill_value=algs[i])
-        tmp_reward = pd.DataFrame(np.concatenate((evaluate_itr, alg, episodes_rewards), axis=1),
-                                  columns=['Iterations (k)', 'Methods', 'Median reward per episode'])
-        if rewards_compare is None:
-            rewards_compare = tmp_reward
-        else:
-            rewards_compare = pd.concat([rewards_compare, tmp_reward], axis=0)
-
-    rewards_compare[['Iterations (k)', 'Median reward per episode']] = rewards_compare[['Iterations (k)', 'Median reward per episode']]\
-        .apply(pd.to_numeric)
-
-    sns.set(context='paper', style='darkgrid')
-    fig = plt.figure()
-    plt.title(maps)
-    sns.lineplot(x="Iterations (k)", y="Median reward per episode", hue='Methods', data=rewards_compare,
-                 ci=68, estimator=np.median)
-    # 格式化成2016-03-20_11-45-39形式
-    tag = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
-    if show:
-        plt.show()
-    else:
-        # palette=colors[:len(algs)+1] dpi=300
-        if k is None:
-            plt.savefig('../Experiments/reward_compare/' + which + '_' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
-        else:
-            plt.savefig('../Experiments/reward_compare/' + maps + '_%s.png' % tag, dpi=350, bbox_inches='tight')
+            plt.savefig('pic.pdf', dpi=600, format='pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':
-    """
-    qmix 1
-    ensemble:
-    5 1
-    10 2
-    15 0 good
-    averaged:
-    5 2 good
-    10 1
-    15 2
-    """
-    which = 'Ensemble'
-    # which = 'Averaged'
-    # plot_one_run_compare(which, how_many=50)
-    plot_multi_run_compare(k=[15,5], maps='5m_vs_6m', num=3, how_many=100)
-    # plot_reward_compare(which=which, maps='5m_vs_6m', n_run=[1,2,1,2], how_many=100, show=False)
+    plot_multi_run_compare(pre='./results-steps/go_orderly',
+                           unit='mil',  # x轴的单位，k或者mil，mmdp要改成k
+                           algs=['QMIX-HER=3', 'QMIX'],
+                           mode=4, # 0在MMDP实验中是Qtot，否则是return
+                                   # 1是峰度或偏度
+                                   # 2是reward rolling mean或者std
+                                   # 3是胜率
+                                   # 4是胜率 rolling mean或者std
+                           s=0, # 0是峰度，1是偏度，0是mean，1是std
+                           num=5,
+                           window=10, # rolling的窗口大小
+                           # split=['adapt', 'eval'], # 算法名字里有这个关键字就将其变成虚线
+                           how_many=None,
+                           show=False,
+                           pic_name='win_rates')
 
-    # 如果已经有图片就删掉
-    # for filename in os.listdir(args.result_dir):
-    #     if filename.endswith('.png'):
-    #         os.remove(args.result_dir + '/' + filename)
-    # plt.savefig(args.result_dir + "/%s.png" % tag)
-
-    # plt.figure()
-    # plt.cla()
-    # # 平均胜率图
-    # plt.subplot(2, 1, 1)
-    # for i in range(len(algs)):
-    #     evaluate_itr, win_rates, _ = load_results(args.result_dir + '/' + algs[i] + '/' + map)
-    #     plt.plot(evaluate_itr, win_rates, c=colors[i], label=algs[i])
-
-    # plt.xlabel('itr')
-    # plt.ylabel('win_rates')
-    # # 累加奖赏误差阴影曲线图
-    # plt.subplot(2, 1, 2)
-    # for i in range(len(algs)):
-    #     evaluate_itr, _, episodes_rewards = load_results(args.result_dir + '/' + algs[i] + '/' + map)
-    #     avg_rewards = np.array(episodes_rewards).mean(axis=1)
-    #     plt.plot(evaluate_itr, avg_rewards, c=colors[i], label=algs[i])
-
-    #     up_error = []
-    #     down_error = []
-    #     for j in range(len(evaluate_itr)):
-    #         up_bound = np.max(episodes_rewards[j])
-    #         down_bound = np.min(episodes_rewards[j])
-    #         up_error.append(up_bound - avg_rewards[j])
-    #         down_error.append(avg_rewards[j] - down_bound)
-    #     # avg_rewards = np.array(avg_rewards)
-    #     up_error = np.array(up_error)
-    #     down_error = np.array(down_error)
-
-    #     plt.fill_between(evaluate_itr, avg_rewards - down_error, avg_rewards + up_error,
-    #                      color=colors[i], alpha=0.2)
-    # plt.xlabel('itr')
-    # plt.ylabel('episode_reward')
-
-    # plt.legend()
-
-    # plt.close()

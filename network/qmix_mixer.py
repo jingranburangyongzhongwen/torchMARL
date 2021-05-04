@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-@Time ： 2020/7/17 20:47
 @Auth ： Kunfeng Li
-@File ：qmix_mixer.py
 @IDE ：PyCharm
-
 """
 import torch.nn as nn
 import torch
