@@ -50,7 +50,7 @@ The experiment settings of all maps are the same as SMAC, and the difficulty is 
 
 Some pictures in `./imgs` are the results of the former version.
 
-### 3s_vs_5z
+### 3s_vs_5z QMIX
 
 <img src="./imgs/qmix-3s_vs_5z.png" style="zoom:80%;" />
 

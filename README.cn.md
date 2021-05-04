@@ -49,7 +49,7 @@ SMAC的各种地图描述在这里：https://github.com/oxwhirl/smac/blob/master
 
 `./imgs` 会有一些额外的图片，是之前版本代码的结果。
 
-### 3s_vs_5z
+### 3s_vs_5z QMIX
 
 <img src="./imgs/qmix-3s_vs_5z.png" style="zoom:80%;" />
 
